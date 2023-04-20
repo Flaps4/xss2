@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta http-equiv="Content-Security-Policy" content="default-src https://*.truesec.com data:; script-src 'nonce-5t47ic' 'unsafe-eval' 'self'">
+  <title>XSS</title>
+  <!-- Import Naver Jindo JS (http://jindo.dev.naver.com/jindo_home/JindoJS.html)-->
+  <script nonce="nonce-5t47ic" src="jindo.desktop.ns.js"></script>
+</head>
+
+<body>
+  <div id="status"></div>
+
+  <script nonce="5t47ic">
+    window.onload = function() {
+      //Only continue if we will load an iframe from our trusted domain.
+      if( new URL(document.location.hash.substring(1)).hostname === "www.truesec.com" ) {
+        document.getElementById("status").innerText = "Loading iframe, please wait...";
+
+        setTimeout(function() {
+          document.getElementById("status").innerText = "Iframe loaded!";
+
+          var iframe = document.createElement("iframe");
+          iframe.setAttribute("src",document.location.hash.substring(1));
+          document.body.appendChild(iframe);
+
+          window.addEventListener("message",function(event) {
+
+            //Check origin and data only contains JSON characters - no strings!
+            if(event.source === iframe.contentWindow && RegExp(/^[^0-9a-z]+$/i).test(event.data)) {
+              //Parse JSON
+              console.log( jindo.$Json(event.data).toObject() );
+            }
+
+          });
+        },100);
+
+      }
+    };
+  </script>
+</body>
+</html>
